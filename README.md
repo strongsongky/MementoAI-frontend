@@ -1,2 +1,3 @@
-MementoAI-frontend</br>
-사전 과제 제출 저장소
+## MementoAI-frontend
+
+사전 과제 제출 저장소입니다.
