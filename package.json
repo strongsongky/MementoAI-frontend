@@ -13,19 +13,6 @@
     "react-beautiful-dnd": "13.1.1",
     "react-dom": "^18.2.0"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/strongsongky/MementoAI-frontend.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/strongsongky/MementoAI-frontend/issues"
-  },
-  "homepage": "https://github.com/strongsongky/MementoAI-frontend#readme",
   "devDependencies": {
     "@babel/core": "^7.24.7",
     "@babel/preset-env": "^7.24.7",
@@ -37,5 +24,20 @@
     "webpack": "^5.92.1",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.0.4"
-  }
+  },
+  "scripts": {
+    "start": "webpack serve --mode development",
+    "build": "webpack --mode production",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/strongsongky/MementoAI-frontend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/strongsongky/MementoAI-frontend/issues"
+  },
+  "homepage": "https://github.com/strongsongky/MementoAI-frontend#readme"
 }
