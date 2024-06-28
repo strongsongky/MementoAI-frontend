@@ -40,8 +40,8 @@ const initialColumns = {
 
 function App() {
   const [columns, setColumns] = useState(initialColumns);
+  const [selectedItems, setSelectedItems] = useState([]);
   const [source, setSource] = useState(null);
-  const [destination, setDestination] = useState(null);
 
   const reorder = (list, startIndex, endIndex) => {
     const result = Array.from(list);
@@ -54,30 +54,27 @@ function App() {
     setSource(start.source);
   };
 
-  const onDragUpdate = (update) => {
-    setDestination(update.destination);
-  };
-
   const onDragEnd = useCallback(
     (result) => {
-      setSource(null);
-      setDestination(null);
-
       const { source, destination } = result;
+
+      setSource(null);
+      setSelectedItems([]);
 
       if (!destination) {
         return;
       }
 
-      const sourceColumn = columns[source.droppableId];
-      const destColumn = columns[destination.droppableId];
-
+      // Prevent items from moving from column-1 to column-3
       if (
         source.droppableId === "column-1" &&
         destination.droppableId === "column-3"
       ) {
         return;
       }
+
+      const sourceColumn = columns[source.droppableId];
+      const destColumn = columns[destination.droppableId];
 
       if (sourceColumn === destColumn) {
         const newItems = reorder(
@@ -89,9 +86,22 @@ function App() {
         setColumns((prev) => ({ ...prev, [newColumn.id]: newColumn }));
       } else {
         const sourceItems = Array.from(sourceColumn.items);
-        const [removed] = sourceItems.splice(source.index, 1);
         const destItems = Array.from(destColumn.items);
-        destItems.splice(destination.index, 0, removed);
+        const movedItems = selectedItems.includes(result.draggableId)
+          ? selectedItems.map((id) =>
+              sourceItems.find((item) => item.id === id)
+            )
+          : [sourceItems[source.index]];
+
+        movedItems.forEach((item) => {
+          const index = sourceItems.findIndex((i) => i.id === item.id);
+          if (index > -1) {
+            sourceItems.splice(index, 1);
+          }
+        });
+
+        destItems.splice(destination.index, 0, ...movedItems);
+
         setColumns((prev) => ({
           ...prev,
           [sourceColumn.id]: { ...sourceColumn, items: sourceItems },
@@ -99,16 +109,28 @@ function App() {
         }));
       }
     },
-    [columns]
+    [columns, selectedItems]
   );
 
-  const getItemStyle = (isDragging, draggableStyle) => {
+  const handleSelect = (itemId) => {
+    setSelectedItems((prevSelectedItems) =>
+      prevSelectedItems.includes(itemId)
+        ? prevSelectedItems.filter((id) => id !== itemId)
+        : [...prevSelectedItems, itemId]
+    );
+  };
+
+  const getItemStyle = (
+    isDragging,
+    draggableStyle,
+    isSelected,
+    sourceDroppableId,
+    destinationDroppableId
+  ) => {
     if (
       isDragging &&
-      destination &&
-      destination.droppableId === "column-3" &&
-      source &&
-      source.droppableId === "column-1"
+      destinationDroppableId === "column-3" &&
+      sourceDroppableId === "column-1"
     ) {
       return {
         ...draggableStyle,
@@ -118,7 +140,7 @@ function App() {
 
     return {
       ...draggableStyle,
-      backgroundColor: isDragging ? "lightgreen" : "grey",
+      backgroundColor: isDragging || isSelected ? "lightgreen" : "grey",
     };
   };
 
@@ -127,11 +149,7 @@ function App() {
       <header className="header">
         <h1>MementoAI - Front Assignment (송경용)</h1>
       </header>
-      <DragDropContext
-        onDragStart={onDragStart}
-        onDragUpdate={onDragUpdate}
-        onDragEnd={onDragEnd}
-      >
+      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div className="columns">
           {Object.values(columns).map((column) => (
             <Droppable key={column.id} droppableId={column.id}>
@@ -143,10 +161,9 @@ function App() {
                     snapshot.isDraggingOver ? "dragging-over" : ""
                   } ${
                     snapshot.isDraggingOver &&
-                    destination &&
-                    destination.droppableId === "column-3" &&
                     source &&
-                    source.droppableId === "column-1"
+                    source.droppableId === "column-1" &&
+                    column.id === "column-3"
                       ? "restricted"
                       : ""
                   }`}
@@ -165,11 +182,21 @@ function App() {
                           {...provided.dragHandleProps}
                           className={`item ${
                             snapshot.isDragging ? "dragging" : ""
+                          } ${
+                            selectedItems.includes(item.id) ? "selected" : ""
                           }`}
                           style={getItemStyle(
                             snapshot.isDragging,
-                            provided.draggableProps.style
+                            provided.draggableProps.style,
+                            selectedItems.includes(item.id),
+                            source?.droppableId,
+                            snapshot.draggingOver
                           )}
+                          onClick={(e) => {
+                            if (e.shiftKey) {
+                              handleSelect(item.id);
+                            }
+                          }}
                         >
                           {item.content}
                         </div>
