@@ -31,6 +31,10 @@ body {
   background-color: lightblue;
 }
 
+.column.restricted {
+  background-color: rgb(255, 161, 110);
+}
+
 .item {
   user-select: none;
   padding: 16px;
@@ -42,4 +46,8 @@ body {
 
 .item.dragging {
   background-color: lightgreen;
+}
+
+.item.dragging.restricted {
+  background-color: red;
 }

@@ -40,6 +40,8 @@ const initialColumns = {
 
 function App() {
   const [columns, setColumns] = useState(initialColumns);
+  const [source, setSource] = useState(null);
+  const [destination, setDestination] = useState(null);
 
   const reorder = (list, startIndex, endIndex) => {
     const result = Array.from(list);
@@ -48,8 +50,19 @@ function App() {
     return result;
   };
 
+  const onDragStart = (start) => {
+    setSource(start.source);
+  };
+
+  const onDragUpdate = (update) => {
+    setDestination(update.destination);
+  };
+
   const onDragEnd = useCallback(
     (result) => {
+      setSource(null);
+      setDestination(null);
+
       const { source, destination } = result;
 
       if (!destination) {
@@ -58,6 +71,13 @@ function App() {
 
       const sourceColumn = columns[source.droppableId];
       const destColumn = columns[destination.droppableId];
+
+      if (
+        source.droppableId === "column-1" &&
+        destination.droppableId === "column-3"
+      ) {
+        return;
+      }
 
       if (sourceColumn === destColumn) {
         const newItems = reorder(
@@ -82,12 +102,36 @@ function App() {
     [columns]
   );
 
+  const getItemStyle = (isDragging, draggableStyle) => {
+    if (
+      isDragging &&
+      destination &&
+      destination.droppableId === "column-3" &&
+      source &&
+      source.droppableId === "column-1"
+    ) {
+      return {
+        ...draggableStyle,
+        backgroundColor: "red",
+      };
+    }
+
+    return {
+      ...draggableStyle,
+      backgroundColor: isDragging ? "lightgreen" : "grey",
+    };
+  };
+
   return (
     <div className="app">
       <header className="header">
         <h1>MementoAI - Front Assignment (송경용)</h1>
       </header>
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext
+        onDragStart={onDragStart}
+        onDragUpdate={onDragUpdate}
+        onDragEnd={onDragEnd}
+      >
         <div className="columns">
           {Object.values(columns).map((column) => (
             <Droppable key={column.id} droppableId={column.id}>
@@ -97,6 +141,14 @@ function App() {
                   ref={provided.innerRef}
                   className={`column ${
                     snapshot.isDraggingOver ? "dragging-over" : ""
+                  } ${
+                    snapshot.isDraggingOver &&
+                    destination &&
+                    destination.droppableId === "column-3" &&
+                    source &&
+                    source.droppableId === "column-1"
+                      ? "restricted"
+                      : ""
                   }`}
                 >
                   <h2>{column.title}</h2>
@@ -114,7 +166,10 @@ function App() {
                           className={`item ${
                             snapshot.isDragging ? "dragging" : ""
                           }`}
-                          style={provided.draggableProps.style}
+                          style={getItemStyle(
+                            snapshot.isDragging,
+                            provided.draggableProps.style
+                          )}
                         >
                           {item.content}
                         </div>
