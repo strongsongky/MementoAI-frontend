@@ -41,6 +41,7 @@ const initialColumns = {
 function App() {
   const [columns, setColumns] = useState(initialColumns);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [draggingItemId, setDraggingItemId] = useState(null);
   const [source, setSource] = useState(null);
 
   const reorder = (list, startIndex, endIndex) => {
@@ -52,6 +53,7 @@ function App() {
 
   const onDragStart = (start) => {
     setSource(start.source);
+    setDraggingItemId(start.draggableId);
   };
 
   const onDragEnd = useCallback(
@@ -59,6 +61,7 @@ function App() {
       const { source, destination } = result;
 
       setSource(null);
+      setDraggingItemId(null);
       setSelectedItems([]);
 
       if (!destination) {
@@ -127,20 +130,23 @@ function App() {
     sourceDroppableId,
     destinationDroppableId
   ) => {
-    if (
+    const isRestrictedArea =
       isDragging &&
       destinationDroppableId === "column-3" &&
-      sourceDroppableId === "column-1"
-    ) {
-      return {
-        ...draggableStyle,
-        backgroundColor: "red",
-      };
-    }
+      sourceDroppableId === "column-1";
+
+    const baseStyle = {
+      backgroundColor: isRestrictedArea
+        ? "red"
+        : isDragging || isSelected
+        ? "lightgreen"
+        : "grey",
+      opacity: isDragging && isSelected ? 0.5 : 1,
+    };
 
     return {
       ...draggableStyle,
-      backgroundColor: isDragging || isSelected ? "lightgreen" : "grey",
+      ...baseStyle,
     };
   };
 
@@ -175,32 +181,63 @@ function App() {
                       draggableId={item.id}
                       index={index}
                     >
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={`item ${
-                            snapshot.isDragging ? "dragging" : ""
-                          } ${
-                            selectedItems.includes(item.id) ? "selected" : ""
-                          }`}
-                          style={getItemStyle(
-                            snapshot.isDragging,
-                            provided.draggableProps.style,
-                            selectedItems.includes(item.id),
-                            source?.droppableId,
-                            snapshot.draggingOver
-                          )}
-                          onClick={(e) => {
-                            if (e.shiftKey) {
-                              handleSelect(item.id);
-                            }
-                          }}
-                        >
-                          {item.content}
-                        </div>
-                      )}
+                      {(provided, snapshot) => {
+                        const isDraggingItem = snapshot.isDragging;
+                        const isSelected = selectedItems.includes(item.id);
+                        const draggingOverId = snapshot.draggingOver;
+
+                        return (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className={`item ${
+                              isDraggingItem ? "dragging" : ""
+                            } ${isSelected ? "selected" : ""}`}
+                            style={getItemStyle(
+                              isDraggingItem,
+                              provided.draggableProps.style,
+                              isSelected,
+                              source?.droppableId,
+                              draggingOverId
+                            )}
+                            onClick={(e) => {
+                              if (e.shiftKey) {
+                                handleSelect(item.id);
+                              }
+                            }}
+                          >
+                            {item.content}
+                            {isDraggingItem && isSelected && (
+                              <div className="dragging-clone">
+                                {selectedItems.map((id) => {
+                                  const selectedItem = column.items.find(
+                                    (item) => item.id === id
+                                  );
+                                  return (
+                                    <div
+                                      key={selectedItem.id}
+                                      className="item dragging-clone-item"
+                                      style={{
+                                        width:
+                                          provided.draggableProps.style.width,
+                                        backgroundColor:
+                                          draggingOverId === "column-3" &&
+                                          source?.droppableId === "column-1"
+                                            ? "red"
+                                            : "lightgreen",
+                                        opacity: 0.5,
+                                      }}
+                                    >
+                                      {selectedItem.content}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }}
                     </Draggable>
                   ))}
                   {provided.placeholder}

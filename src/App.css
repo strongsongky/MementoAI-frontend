@@ -51,3 +51,18 @@ body {
 .item.dragging.restricted {
   background-color: red;
 }
+
+.dragging-clone {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+.dragging-clone-item {
+  background-color: lightgreen;
+  opacity: 0.5;
+}
