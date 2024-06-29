@@ -68,7 +68,6 @@ function App() {
         return;
       }
 
-      // Prevent items from moving from column-1 to column-3
       if (
         source.droppableId === "column-1" &&
         destination.droppableId === "column-3"
@@ -78,6 +77,14 @@ function App() {
 
       const sourceColumn = columns[source.droppableId];
       const destColumn = columns[destination.droppableId];
+
+      if (
+        sourceColumn === destColumn &&
+        destination.index % 2 === 1 &&
+        destColumn.items[destination.index - 1]?.id.startsWith("item-1-")
+      ) {
+        return;
+      }
 
       if (sourceColumn === destColumn) {
         const newItems = reorder(
@@ -247,6 +254,9 @@ function App() {
           ))}
         </div>
       </DragDropContext>
+      <div className="shift-message">
+        <p>( Shift키를 눌러 다중 선택 가능 )</p>
+      </div>
     </div>
   );
 }
